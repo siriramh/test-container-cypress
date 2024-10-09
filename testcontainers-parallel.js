@@ -3,16 +3,18 @@ const cypress = require("cypress");
 const path = require("path");
 
 (async () => {
+  let runningContainer1, runningContainer2;
+
   try {
     console.log("Building and starting multiple containers in parallel...");
 
-    // 1. สร้างและเริ่มคอนเทนเนอร์ทั้งสองตัวพร้อมกันโดยใช้ Promise.all
-    const [runningContainer1, runningContainer2] = await Promise.all([
-      GenericContainer.fromDockerfile(path.resolve(__dirname, "./service1")) // Dockerfile for service1
+    // Build and start containers in parallel
+    [runningContainer1, runningContainer2] = await Promise.all([
+      GenericContainer.fromDockerfile(path.resolve(__dirname, "./service1"))
         .build()
         .then((container) => container.withExposedPorts(3000).start()),
 
-      GenericContainer.fromDockerfile(path.resolve(__dirname, "./service2")) // Dockerfile for service2
+      GenericContainer.fromDockerfile(path.resolve(__dirname, "./service2"))
         .build()
         .then((container) => container.withExposedPorts(4000).start()),
     ]);
@@ -27,29 +29,30 @@ const path = require("path");
     const baseUrl1 = `http://localhost:${port1}`;
     const baseUrl2 = `http://localhost:${port2}`;
 
-    // 2. Run Cypress tests for both services in parallel
+    // Run Cypress tests in parallel
     console.log("Running Cypress tests for both services in parallel...");
     await Promise.all([
       cypress.run({
         config: {
           baseUrl: baseUrl1,
-          specPattern: "cypress/integration/service1/*.spec.js", // Run only service1 tests
+          specPattern: "cypress/integration/service1/*.spec.js",
         },
       }),
       cypress.run({
         config: {
           baseUrl: baseUrl2,
-          specPattern: "cypress/integration/service2/*.spec.js", // Run only service2 tests
+          specPattern: "cypress/integration/service2/*.spec.js",
         },
       }),
     ]);
 
-    // 3. Stop both containers
-    console.log("Stopping both containers...");
-    await Promise.all([runningContainer1.stop(), runningContainer2.stop()]);
-
-    console.log("All tests complete. Containers stopped.");
+    console.log("All tests complete.");
   } catch (error) {
     console.error("Error occurred:", error);
+  } finally {
+    // Ensure containers are stopped
+    console.log("Stopping both containers...");
+    await Promise.all([runningContainer1?.stop(), runningContainer2?.stop()]);
+    console.log("Containers stopped.");
   }
 })();
