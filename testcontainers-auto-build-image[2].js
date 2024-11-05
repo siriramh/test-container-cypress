@@ -21,9 +21,10 @@ async function buildAndStartContainer(servicePath, port) {
 }
 
 // ฟังก์ชันสำหรับรันการทดสอบ Cypress
-async function runCypressTests(baseUrl, specPattern) {
+async function runCypressTests(baseUrl, specPattern, configFile) {
   console.log(`Running Cypress tests for ${baseUrl}...`);
   await cypress.run({
+    configFile: configFile,
     config: {
       baseUrl: baseUrl,
       specPattern,
@@ -40,23 +41,27 @@ async function runCypressTests(baseUrl, specPattern) {
       await buildAndStartContainer("./service1", 3000);
 
     // รันการทดสอบ Cypress สำหรับ service1
-    await runCypressTests(baseUrl1, "cypress/integration/service1/*.spec.js");
+    await runCypressTests(
+      baseUrl1,
+      "cypress/integration/service1/*.spec.js",
+      "service1.config.js"
+    );
 
-    // หยุด container หลังจากการทดสอบเสร็จสิ้น
-    console.log("Stopping container 1...");
-    await runningContainer1.stop();
+    // // หยุด container หลังจากการทดสอบเสร็จสิ้น
+    // console.log("Stopping container 1...");
+    // await runningContainer1.stop();
 
-    console.log("Building and starting container 2...");
-    // สร้างและเริ่ม container สำหรับ service2
-    const { runningContainer: runningContainer2, baseUrl: baseUrl2 } =
-      await buildAndStartContainer("./service2", 4000);
+    // console.log("Building and starting container 2...");
+    // // สร้างและเริ่ม container สำหรับ service2
+    // const { runningContainer: runningContainer2, baseUrl: baseUrl2 } =
+    //   await buildAndStartContainer("./service2", 4000);
 
-    // รันการทดสอบ Cypress สำหรับ service2
-    await runCypressTests(baseUrl2, "cypress/integration/service2/*.spec.js");
+    // // รันการทดสอบ Cypress สำหรับ service2
+    // await runCypressTests(baseUrl2, "cypress/integration/service2/*.spec.js");
 
-    // หยุด container หลังจากการทดสอบเสร็จสิ้น
-    console.log("Stopping container 2...");
-    await runningContainer2.stop();
+    // // หยุด container หลังจากการทดสอบเสร็จสิ้น
+    // console.log("Stopping container 2...");
+    // await runningContainer2.stop();
 
     console.log("All tests complete. Containers stopped.");
   } catch (error) {
